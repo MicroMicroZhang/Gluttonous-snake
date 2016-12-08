@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>999999999999999</title>
+</head>
+<body>
+
+<canvas id="bg" width="600" height="400"></canvas>
+<script>
+    var canvas = document.getElementById("bg")
+    var context = canvas.getContext('2d');
+    var guid = document.getElementById('guid');
+//    var currentlocationX = ~~(Math.random() * 12) * 5 + 5;
+//    var currentlocationY = ~~(Math.random() * 8) * 5 + 5;
+    var count =0;
+    var snakeX = [];
+    var snakeY = [];
+    var foodX;
+    var foodY;
+    var BLOCK_WIDTH = 10;
+    var BLOCK_HEIGHT = 10;
+    var DIRECTION = {
+        UP: 0,
+        DOWN: 1,
+        LEFT: 2,
+        RIGHT: 3
+    };
+    var currentDirection = null;
+
+    function SnakeBody(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    //snakeX[]数组最后一个元素下标
+    var tailX = snakeX.length - 1;
+    var tailY = snakeY.length - 1;
+    //初始化背景二维数组
+    var background = new Array();
+    for (var i = 0; i < 60; i++) {
+        background[i] = new Array();
+        for (var j = 0; j < 40; j++) {
+            background[i][j] = 0;
+        }
+    }
+    //画网格
+    function DrawGuid() {
+        context.save();
+        for (var i = 10; i < 600; i += 10) {
+            context.beginPath();
+            context.lineWidth = 0.09;
+            context.strokeStyle = "gray";
+            context.moveTo(i, 0);
+            context.lineTo(i, canvas.height);
+            context.closePath();
+            context.stroke();
+        }
+        for (var i = 10; i < 400; i += 10) {
+            context.beginPath();
+            context.lineWidth = 0.09;
+            context.strokeStyle = "gray";
+            context.moveTo(0, i);
+            context.lineTo(canvas.width, i);
+            context.closePath();
+            context.stroke();
+        }
+
+        context.beginPath();
+        context.lineWidth = 1;
+        context.strokeStyle = "red";
+        context.rect(0, 0, 600, 400);
+        context.closePath();
+        context.stroke();
+    }
+
+    function CreateFood() {
+        foodX = ~~(Math.random() * 12) * 5;
+        foodY = ~~(Math.random() * 8) * 5;
+//        foodX=25;
+//        foodY=20;
+    }
+
+    function DrawFood() {
+        context.beginPath();
+        context.fillStyle = "green";
+        context.fillRect(foodX * 10 - 5, foodY * 10 -5, 10, 10);
+        context.closePath();
+    }
+
+    //初始化蛇的方向0上1下2左3右
+    var Snake = function (direction) {
+        this.direction = direction;
+        currentDirection=direction;
+        this.headX = 30;
+        this.headY = 20;
+        this.body = [];
+
+        for (var i = 1; i <= 3; ++i) {
+            this.body.push(new SnakeBody(this.headX, this.headY + i));
+        }
+    };
+    Snake.prototype.draw = function () {
+        context.beginPath();
+        //head
+        context.fillStyle = "black";
+        context.arc(this.headX * BLOCK_WIDTH, this.headY * BLOCK_HEIGHT, 5, 0, 360, false);
+        context.fill();
+        context.closePath();
+        //body
+
+        for (var i in this.body) {
+            var block = this.body[i];
+            context.beginPath();
+            context.fillStyle = "red";
+            context.arc(block.x * BLOCK_WIDTH, block.y * BLOCK_HEIGHT, 5, 0, 360, false);
+            context.fill();
+            context.closePath();
+        }
+
+
+    };
+
+    Snake.prototype.isEat = function () {
+        return (this.headX == foodX && this.headY == foodY);
+       /*if(this.headX == foodX &&this.headY == foodY+1 ){
+           return true;
+       };
+       if(this.headX==foodX&&this.headY==foodY-1){
+           return true;
+       };
+       if(this.headX==foodX+1 &&this.headY == foodY){
+           return true;
+       };
+       if(this.headX==foodX-1 &&this.headY == foodY){
+           return true;
+       }*/
+    };
+    function isGameOver(){
+
+            for(var i=0;i<snake.body.length;i++){
+                if(snake.headX===snake.body[i].x && snake.headY===snake.body[i].y ){
+                    alert('game over');
+                    context.clearRect(0,0,600,400);
+                    clearInterval(refresh);
+                    clearInterval(automove);
+                    break;
+                }else {
+                    continue;
+                }
+            }
+    }
+    Snake.prototype.move = function () {
+        isGameOver();
+        var offsetX = 0, offsetY = 0;
+        switch(this.direction) {
+            case DIRECTION.UP:
+                offsetX = 0;
+                offsetY = -1;
+                break;
+            case DIRECTION.DOWN:
+                offsetX = 0;
+                offsetY = 1;
+                break;
+            case DIRECTION.LEFT:
+                offsetX = -1;
+                offsetY = 0;
+                break;
+            case DIRECTION.RIGHT:
+                offsetX = 1;
+                offsetY = 0;
+                break;
+        }
+        var headPosition = {x: this.headX, y: this.headY};
+        this.headX += offsetX;
+        this.headY += offsetY;
+
+        this.headX < 0 && (this.headX = 60);
+        this.headX > 60 && (this.headX = 0);
+        this.headY < 0 && (this.headY = 40);
+        this.headY > 40 && (this.headY = 0);
+
+        for (var i = this.body.length -1; i>=0; --i) {
+            var block = this.body[i];
+            var previousBlockPosition = this.body[i-1] || headPosition;
+            block.x = previousBlockPosition.x;
+            block.y = previousBlockPosition.y;
+        }
+
+        //is eat
+        if (this.isEat()) {
+            count=count+1;
+            CreateFood();
+//            var tempDirection = snake.direction;
+
+//            this.body.push(new SnakeBody(this.headX, this.headY));
+//            snake=null;
+//            var snake= new Snake(tempDirection);
+//            snake.body = [];
+            switch (snake.direction){
+                case 0:{
+                        this.body.push(new SnakeBody(this.headX, this.headY+1));
+                    break;
+                }
+                case 1:{
+                        this.body.push(new SnakeBody(this.headX, this.headY-1));
+                    break;
+                }
+                case 2:{
+                        this.body.push(new SnakeBody(this.headX+1, this.headY));
+                    break;
+                }
+                case 3:{
+                        this.body.push(new SnakeBody(this.headX-1, this.headY));
+                    break;
+                }
+            }
+        }
+    };
+
+
+    var snake = new Snake(DIRECTION.UP);
+
+
+    document.onkeydown = function (event) {
+        var e = event || window.event || arguments.callee.caller.arguments[0];
+        console.log(e.keyCode);
+        var keyCodeHandler = {
+            38: function () {
+                //判断是否可以更改方向
+                if (snake.direction === DIRECTION.DOWN){
+                    return;
+                }
+                currentDirection=DIRECTION.UP;
+                return snake.direction = DIRECTION.UP;
+            },
+            40: function () {
+                if (snake.direction === DIRECTION.UP){
+                    return;
+                }
+                currentDirection=DIRECTION.DOWN;
+                    return snake.direction = DIRECTION.DOWN;
+            },
+            37: function () {
+                if (snake.direction === DIRECTION.RIGHT){
+                    return;
+                }
+                currentDirection=DIRECTION.LEFT;
+                    return snake.direction = DIRECTION.LEFT;
+            },
+            39: function () {
+                if (snake.direction === DIRECTION.LEFT){
+                    return;
+                }
+                currentDirection=DIRECTION.RIGHT;
+                    return snake.direction = DIRECTION.RIGHT;
+            }
+        };
+        var func = keyCodeHandler[e.keyCode];
+        func && func();
+    };
+
+    CreateFood();
+
+    var Fresh = function () {
+        //clear
+        context.clearRect(0, 0, 600, 400);
+        DrawGuid();
+        snake.draw();
+        DrawFood();
+
+//        context.beginPath();
+//        context.fillStyle = "black";
+//        context.arc(50, 50, 50, 0, 360, false);
+//        context.fill();
+//        context.closePath();
+    };
+//Fresh();
+    var refresh = setInterval(Fresh, 100);
+    var automove = setInterval(snake.move.bind(snake), 100);
+
+</script>
+
+</body>
+
+</html>
